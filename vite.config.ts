@@ -7,5 +7,13 @@ export default defineConfig({
   plugins: [
       react(),
       tailwindcss(),
+
   ],
+  base: '/raj-durbar/',
+  build: {
+     rollupOptions: {
+        // ensures we can copy index.html to 404.html
+        }
+    }
+
 })
