@@ -14,11 +14,11 @@ export function Navigation() {
 
                 {/* Desktop Navigation */}
                 <div className="hidden md:flex justify-center space-x-12">
-                    <a href="home" className=" hover:text-red-800 text-sm font-medium border-b-2 border-transparent hover:border-red-800 pb-1 transition-all">Home</a>
-                    <a href="menu" className=" hover:text-red-800 text-sm font-medium border-b-2 border-transparent hover:border-red-800 pb-1 transition-all">Menu</a>
+                    <a href="#/home" className=" hover:text-red-800 text-sm font-medium border-b-2 border-transparent hover:border-red-800 pb-1 transition-all">Home</a>
+                    <a href="#/menu" className=" hover:text-red-800 text-sm font-medium border-b-2 border-transparent hover:border-red-800 pb-1 transition-all">Menu</a>
                     <a href={FOOD_BOOKING_URL} className=" hover:text-red-800 text-sm font-medium border-b-2 border-transparent hover:border-red-800 pb-1 transition-all">Book A Table</a>
-                    <a href="gallery" className=" hover:text-red-800 text-sm font-medium border-b-2 border-transparent hover:border-red-800 pb-1 transition-all">Gallery</a>
-                    <a href="hours" className=" hover:text-red-800 text-sm font-medium border-b-2 border-transparent hover:border-red-800 pb-1 transition-all">Hours & Locations</a>
+                    <a href="#/gallery" className=" hover:text-red-800 text-sm font-medium border-b-2 border-transparent hover:border-red-800 pb-1 transition-all">Gallery</a>
+                    <a href="#/hours" className=" hover:text-red-800 text-sm font-medium border-b-2 border-transparent hover:border-red-800 pb-1 transition-all">Hours & Locations</a>
                 </div>
 
                 {/* Mobile Navigation Toggle */}
