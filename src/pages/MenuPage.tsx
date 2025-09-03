@@ -2,6 +2,7 @@ import {useState} from "react";
 import TopBanner from "../components/TopBanner.tsx";
 import Header from "../components/Header.tsx";
 import Navigation from "../components/Navigation.tsx";
+import Footer from "../components/Footer.tsx";
 
 
 interface MenuItem {
@@ -337,6 +338,7 @@ export default function MenuPage() {
                     ))}
                 </div>
             </div>
+            <Footer/>
         </div>
     )
 }

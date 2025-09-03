@@ -5,11 +5,13 @@ import {createHashRouter, RouterProvider} from "react-router-dom";
 import HomePage from "./pages/HomePage.tsx";
 import MenuPage from "./pages/MenuPage.tsx";
 import NoPage from "./pages/NoPage.tsx";
+import ContactPage from "./pages/ContactPage.tsx";
 
 const router = createHashRouter([
     {path:"/", element: <HomePage /> },
     {path:"/home", element: <HomePage /> },
     {path:"/menu", element: <MenuPage /> },
+    {path:"/hours", element: <ContactPage /> },
     {path:"/*", element: <NoPage /> }
 ])
 
