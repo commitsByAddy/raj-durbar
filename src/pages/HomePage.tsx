@@ -4,6 +4,7 @@ import Navigation from "../components/Navigation.tsx";
 import ActionButton from "../components/ActionButton.tsx";
 import {Clock, MapPin, Phone} from "lucide-react";
 import Footer from "../components/Footer.tsx";
+import HeroSection from "../components/HeroSection.tsx";
 
 
 export default function HomePage() {
@@ -36,26 +37,7 @@ export default function HomePage() {
             <TopBanner/>
             <Header/>
             <Navigation/>
-
-            {/* Hero Section with Food Background */}
-            <section className="relative h-80 mb-8">
-                <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{
-                        backgroundImage: `url('https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=1920&h=600&fit=crop')`,
-                    }}
-                >
-                    <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-                </div>
-
-                <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold text-biege-800 mb-4 leading-tight">
-                        Kitchen with the spices<br />
-                        of India and soul of<br />
-                        Nepal.
-                    </h2>
-                </div>
-            </section>
+            <HeroSection/>
 
             {/* Action Buttons */}
             <ActionButton/>
