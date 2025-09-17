@@ -6,12 +6,10 @@ export default function HeroSection() {
             {/* Hero Section with Food Background */}
             <section className="relative h-80 mb-8">
                 <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{
-                        backgroundImage: `url('/raj-durbar/assets/Home_Banner.avif')`,
-                    }}
+                    className="absolute inset-0 bg-fixed bg-cover bg-center"
+                    style={{ backgroundImage: `url('/raj-durbar/assets/Hero_Banner.avif')` }}
                 >
-                    <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+                    <div className="absolute inset-0 bg-black/50 "></div>
                 </div>
 
                 <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
