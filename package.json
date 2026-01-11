@@ -13,7 +13,9 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@react-email/components": "^0.5.3",
     "@react-router/dev": "^7.7.1",
+    "@supabase/supabase-js": "^2.90.1",
     "@tailwindcss/vite": "^4.1.11",
     "lucide-react": "^0.532.0",
     "react": "^19.1.0",

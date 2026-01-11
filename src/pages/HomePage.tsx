@@ -5,6 +5,8 @@ import ActionButton from "../components/ActionButton.tsx";
 import {Clock, MapPin, Phone} from "lucide-react";
 import Footer from "../components/Footer.tsx";
 import HeroSection from "../components/HeroSection.tsx";
+import { Link } from "@react-email/components";
+import OfferPopup from "../components/OfferPopup.tsx";
 
 
 export default function HomePage() {
@@ -34,6 +36,7 @@ export default function HomePage() {
 
     return (
         < div className="min-h-screen" style={{ backgroundColor: '#f5f1e8' }}>
+            <OfferPopup/>
             <TopBanner/>
             <Header/>
             <Navigation/>
@@ -46,8 +49,8 @@ export default function HomePage() {
             <section className="max-w-4xl mx-auto px-4 text-center mb-16">
                 <div className="relative">
 
-                    <div className="pt-12">
-                        <p className="text-red-900 text-lg md:text-xl leading-relaxed font-medium">
+                    <div className="pt-6">
+                        <p className="text-red-900 text-lg md:text-5xl leading-relaxed font-medium">
                             We believe that food is more than just a meal – it's a way to bring people together,
                             build community, and celebrate culture. Our mission is to offer an inviting space where families,
                             friends, and neighbors can gather and enjoy a meal together.
@@ -172,7 +175,7 @@ export default function HomePage() {
                             <MapPin size={20} />
                         </div>
                         <h3 className="font-semibold mb-2">Location</h3>
-                        <p className="text-sm text-red-100">Addlestone, Surrey</p>
+                        <p className="text-sm text-red-100">31 The Broadway, Addlestone KT15 3EU</p>
                     </div>
 
                     <div>
@@ -180,7 +183,11 @@ export default function HomePage() {
                             <Phone size={20} />
                         </div>
                         <h3 className="font-semibold mb-2">Contact</h3>
-                        <p className="text-sm text-red-100">Call for reservations</p>
+                        <Link href={`mailto:info@rajdurbar.co.uk`}>
+                            <p className="text-sm text-red-100 hover:text-red-700">Mail: info@rajdurbar.co.uk</p>
+                        </Link>
+                        <p className="text-sm text-red-100">Tel: 01932348400 | 01932353579</p>
+
                     </div>
 
                     <div>
@@ -188,7 +195,9 @@ export default function HomePage() {
                             <Clock size={20} />
                         </div>
                         <h3 className="font-semibold mb-2">Hours</h3>
-                        <p className="text-sm text-red-100">Open Daily</p>
+                        <p className="text-sm text-red-100"> Mon - Thu: 05:30pm - 10:30pm</p>
+                        <p className="text-sm text-red-100">Fri - Sat: 05:00pm - 11:00pm</p>
+                        <p className="text-sm text-red-100">Sun & Bank Holidays: 05:00am - 10:00pm</p>
                     </div>
                 </div>
             </section>
