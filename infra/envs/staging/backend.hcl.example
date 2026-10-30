@@ -1,0 +1,2 @@
+# Copy to backend.hcl and replace with the state_bucket output from the bootstrap.
+bucket = "rajdurbar-tfstate-123456789012"

@@ -1,0 +1,12 @@
+# Copy this file to terraform.tfvars and fill in the email addresses.
+# terraform.tfvars is git-ignored; it never goes to GitHub.
+
+alert_emails = [
+  "you@example.com",
+  "owner@example.com",
+]
+
+# Defaults, change only if needed:
+# region                = "eu-west-2"
+# github_repository     = "commitsByAddy/raj-durbar"
+# budget_thresholds_usd = [20, 40]
