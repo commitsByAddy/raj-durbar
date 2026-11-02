@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Offers panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&amp;family=Jost:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div role="dialog" aria-modal="true" aria-labelledby="offers-title" style="width: 100%; max-width: 720px; box-sizing: border-box; background: #3D0F17; color: #F5E9CB; font-family: 'Jost', sans-serif; font-size: 19px; line-height: 1.55; border: 2px solid {{accent}}; padding: {{pad}}; display: flex; flex-direction: column; gap: 24px">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+    <h2 id="offers-title" style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 44px; line-height: 1.05">Our offers</h2>
+    <button type="button" onClick="{{close}}" style="flex: none; height: 52px; padding: 0 16px; border: 2px solid #F5E9CB; background: transparent; color: #F5E9CB; font-family: 'Jost', sans-serif; font-size: 18px; font-weight: 500; display: flex; align-items: center; gap: 8px; cursor: pointer"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>Close</button>
+  </div>
+
+  <section style="background: {{accent}}; color: #3D0F17; padding: 28px; display: flex; flex-direction: column; gap: 12px">
+    <span style="align-self: flex-start; padding: 4px 14px; background: #3D0F17; color: #F5E9CB; font-size: 17px; font-weight: 600">Every day</span>
+    <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 38px; line-height: 1.1">10% off every collection order</h3>
+    <p style="margin: 0">Order for collection and 10% comes off your bill. No code needed.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px">
+      <a href="https://3554.letsorder.uk/" style="flex: 1 1 220px; min-height: 58px; background: #3D0F17; color: #F5E9CB; text-decoration: none; font-size: 19px; font-weight: 600; display: flex; align-items: center; justify-content: center">Order for collection</a>
+      <a href="tel:01932348400" style="flex: 1 1 180px; min-height: 58px; border: 2px solid #3D0F17; color: #3D0F17; text-decoration: none; font-size: 19px; font-weight: 600; display: flex; align-items: center; justify-content: center; box-sizing: border-box">Call 01932 348400</a>
+    </div>
+  </section>
+
+  <section style="background: #4E1620; border: 1px solid #8A4450; padding: 28px; display: flex; flex-direction: column; gap: 12px">
+    <span style="align-self: flex-start; padding: 4px 14px; border: 2px solid {{accent}}; color: {{accent}}; font-size: 17px; font-weight: 600">This week · eating in</span>
+    <h3 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 34px; line-height: 1.15">[THIS WEEK'S EAT-IN DEAL, e.g. Free momo with every thali]</h3>
+    <p style="margin: 0; color: #E6D3A8">[DAYS] · until [DATE]. Just mention it when you book or order at the table.</p>
+    <a href="{{bookHref}}" style="margin-top: 4px; min-height: 58px; border: 2px solid {{accent}}; color: {{accent}}; text-decoration: none; font-size: 19px; font-weight: 600; display: flex; align-items: center; justify-content: center; box-sizing: border-box">Book a table for this deal</a>
+  </section>
+
+  <p style="margin: 0; font-size: 17px; color: #E6D3A8">[Any terms, e.g. one offer per order. Not valid with other deals.]</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#E8C878","options":["#E8C878","#D9B45A","#F1E2B8"]},"phone":{"editor":"boolean","default":false},"onClose":{"editor":null},"$preview":{"width":720,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const phone = !!this.props.phone;
+    return {
+      accent: this.props.accent ?? '#E8C878',
+      pad: phone ? '20px' : '36px',
+      bookHref: phone ? 'PhoneBook.dc.html' : 'BookTable.dc.html',
+      close: () => { if (this.props.onClose) this.props.onClose(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

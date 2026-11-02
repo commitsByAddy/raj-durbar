@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add a booking · staff</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,700;1,700&amp;family=Jost:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div role="dialog" aria-modal="true" aria-labelledby="add-title" style="width: 100%; max-width: 640px; min-height: 100%; box-sizing: border-box; background: #FFFFFF; color: #3D0F17; font-family: 'Jost', sans-serif; font-size: 18px; line-height: 1.5; display: flex; flex-direction: column">
+
+  <div style="background: #3D0F17; color: #F5E9CB; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <h2 id="add-title" style="margin: 0; font-size: 28px; font-weight: 600">{{title}}</h2>
+    <button type="button" onClick="{{cancel}}" style="min-height: 52px; padding: 0 16px; border: 2px solid #F5E9CB; background: transparent; color: #F5E9CB; font-family: 'Jost', sans-serif; font-size: 18px; font-weight: 500; display: flex; align-items: center; gap: 8px; cursor: pointer"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>Close</button>
+  </div>
+
+  <div style="padding: 24px; display: flex; flex-direction: column; gap: 28px">
+
+    <sc-if value="{{hasErrors}}" hint-placeholder-val="{{ false }}">
+      <div role="alert" style="background: #FBEAEA; border: 2px solid #7A1F2B; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+        <strong style="font-size: 19px">Please check:</strong>
+        <sc-for list="{{errors}}" as="e" hint-placeholder-count="1">
+          <span>· {{e.text}}</span>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <fieldset style="border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+      <legend style="font-size: 20px; font-weight: 600; padding: 0; margin-bottom: 10px">Day</legend>
+      <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px">
+        <sc-for list="{{dayChips}}" as="d" hint-placeholder-count="7">
+          <button type="button" onClick="{{d.pick}}" aria-pressed="{{d.pressed}}" disabled="{{d.closed}}" style="{{d.style}}"><span style="font-weight: 600">{{d.label}}</span><span style="font-size: 15px">{{d.sub}}</span></button>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <label for="add-later" style="font-size: 16px; font-weight: 600">Or a later date</label>
+        <input id="add-later" type="date" style="height: 48px; padding: 0 10px; font-family: 'Jost', sans-serif; font-size: 17px; color: #3D0F17; border: 2px solid #B99B6B; background: #FFFFFF">
+      </div>
+    </fieldset>
+
+    <fieldset style="border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+      <legend style="font-size: 20px; font-weight: 600; padding: 0; margin-bottom: 4px">Time</legend>
+      <span style="font-size: 16px; color: #6B3138">{{hoursNote}} Each time shows how many tables are already booked.</span>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px">
+        <sc-for list="{{slots}}" as="slot" hint-placeholder-count="9">
+          <button type="button" onClick="{{slot.pick}}" aria-pressed="{{slot.pressed}}" style="{{slot.style}}"><span>{{slot.t}}</span><span style="{{slot.noteStyle}}">{{slot.note}}</span></button>
+        </sc-for>
+      </div>
+    </fieldset>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span id="add-guests" style="font-size: 20px; font-weight: 600">Number of guests</span>
+      <div role="group" aria-labelledby="add-guests" style="display: flex; align-items: center; gap: 14px">
+        <button type="button" onClick="{{dec}}" aria-label="One fewer guest" style="width: 60px; height: 60px; border: 2px solid #7A1F2B; background: #FFFFFF; color: #7A1F2B; font-size: 32px; line-height: 1; cursor: pointer">−</button>
+        <span aria-live="polite" style="min-width: 56px; text-align: center; font-size: 34px; font-weight: 600">{{party}}</span>
+        <button type="button" onClick="{{inc}}" aria-label="One more guest" style="width: 60px; height: 60px; border: 2px solid #7A1F2B; background: #FFFFFF; color: #7A1F2B; font-size: 32px; line-height: 1; cursor: pointer">+</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px">
+      <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 8px">
+        <label for="add-name" style="font-size: 20px; font-weight: 600">Customer name</label>
+        <input id="add-name" type="text" value="{{form.name}}" onChange="{{setName}}" style="height: 56px; padding: 0 14px; font-family: 'Jost', sans-serif; font-size: 19px; color: #3D0F17; border: 2px solid #B99B6B; background: #FFFFFF; box-sizing: border-box">
+      </div>
+      <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 8px">
+        <label for="add-phone" style="font-size: 20px; font-weight: 600">Phone number</label>
+        <input id="add-phone" type="tel" value="{{form.phone}}" onChange="{{setPhone}}" style="height: 56px; padding: 0 14px; font-family: 'Jost', sans-serif; font-size: 19px; color: #3D0F17; border: 2px solid #B99B6B; background: #FFFFFF; box-sizing: border-box">
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end">
+      <div style="flex: 0 1 160px; display: flex; flex-direction: column; gap: 8px">
+        <label for="add-table" style="font-size: 20px; font-weight: 600">Table <span style="font-weight: 400; font-size: 16px; color: #6B3138">(optional)</span></label>
+        <input id="add-table" type="text" value="{{form.table}}" onChange="{{setTable}}" placeholder="e.g. 7" style="height: 56px; padding: 0 14px; font-family: 'Jost', sans-serif; font-size: 19px; color: #3D0F17; border: 2px solid #B99B6B; background: #FFFFFF; box-sizing: border-box; width: 100%">
+      </div>
+      <div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 8px">
+        <span id="add-via" style="font-size: 20px; font-weight: 600">Booked by</span>
+        <div role="group" aria-labelledby="add-via" style="display: flex">
+          <sc-for list="{{vias}}" as="v" hint-placeholder-count="3">
+            <button type="button" onClick="{{v.pick}}" aria-pressed="{{v.pressed}}" style="{{v.style}}">{{v.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <fieldset style="border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px">
+      <legend style="font-size: 20px; font-weight: 600; padding: 0; margin-bottom: 10px">Notes <span style="font-weight: 400; font-size: 16px; color: #6B3138">(tap any that apply)</span></legend>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{tags}}" as="tg" hint-placeholder-count="6">
+          <button type="button" onClick="{{tg.pick}}" aria-pressed="{{tg.pressed}}" style="{{tg.style}}">{{tg.label}}</button>
+        </sc-for>
+      </div>
+      <sc-if value="{{allergyOn}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px; background: #FBEAEA; border-left: 6px solid #7A1F2B">
+          <label for="add-allergy" style="font-size: 18px; font-weight: 600">Which allergy?</label>
+          <input id="add-allergy" type="text" value="{{form.allergy}}" onChange="{{setAllergy}}" placeholder="e.g. peanuts, gluten, dairy" style="height: 52px; padding: 0 14px; font-family: 'Jost', sans-serif; font-size: 18px; color: #3D0F17; border: 2px solid #7A1F2B; background: #FFFFFF; box-sizing: border-box">
+        </div>
+      </sc-if>
+      <label for="add-other" style="font-size: 17px; font-weight: 600; margin-top: 4px">Anything else</label>
+      <textarea id="add-other" rows="2" value="{{form.other}}" onChange="{{setOther}}" placeholder="e.g. prefers a quiet table" style="padding: 12px 14px; font-family: 'Jost', sans-serif; font-size: 18px; color: #3D0F17; border: 2px solid #B99B6B; background: #FFFFFF; resize: vertical"></textarea>
+    </fieldset>
+
+    <label for="add-text" style="display: flex; align-items: center; gap: 14px; min-height: 52px; cursor: pointer">
+      <input id="add-text" type="checkbox" checked="{{form.sendText}}" onChange="{{setSendText}}" style="width: 28px; height: 28px; accent-color: #7A1F2B; flex: none">
+      <span>{{textLabel}}</span>
+    </label>
+
+    <sc-if value="{{isEdit}}" hint-placeholder-val="{{ false }}">
+      <div style="border-top: 1px solid #E7D9B8; padding-top: 20px; display: flex; flex-direction: column; gap: 12px">
+        <sc-if value="{{notConfirming}}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{askDelete}}" style="align-self: flex-start; min-height: 52px; padding: 0 18px; background: #FFFFFF; color: #7A1F2B; border: 2px solid #7A1F2B; font-family: 'Jost', sans-serif; font-size: 18px; font-weight: 600; cursor: pointer">Cancel this booking</button>
+        </sc-if>
+        <sc-if value="{{confirming}}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="background: #FBEAEA; border: 2px solid #7A1F2B; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+            <strong style="font-size: 20px">Cancel {{form.name}}'s booking?</strong>
+            <span>It will be taken off the list. This can't be undone.</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px">
+              <button type="button" onClick="{{doDelete}}" style="min-height: 52px; padding: 0 18px; background: #7A1F2B; color: #FFFFFF; border: 2px solid #7A1F2B; font-family: 'Jost', sans-serif; font-size: 18px; font-weight: 600; cursor: pointer">Yes, cancel booking</button>
+              <button type="button" onClick="{{keepBooking}}" style="min-height: 52px; padding: 0 18px; background: #FFFFFF; color: #3D0F17; border: 2px solid #3D0F17; font-family: 'Jost', sans-serif; font-size: 18px; font-weight: 600; cursor: pointer">No, keep it</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="margin-top: auto; position: sticky; bottom: 0; background: #F4EAD3; border-top: 1px solid #E7D9B8; padding: 16px 24px; display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 17px; font-weight: 600">{{summary}}</span>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <button type="button" onClick="{{save}}" style="flex: 1 1 220px; min-height: 60px; background: #7A1F2B; color: #FFFFFF; border: none; font-family: 'Jost', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer">{{saveLabel}}</button>
+      <button type="button" onClick="{{cancel}}" style="flex: 0 1 140px; min-height: 60px; background: #FFFFFF; color: #3D0F17; border: 2px solid #3D0F17; font-family: 'Jost', sans-serif; font-size: 19px; font-weight: 500; cursor: pointer">{{closeLabel}}</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"days":{"editor":null},"startDay":{"editor":null},"booking":{"editor":null},"onSave":{"editor":null},"onCancel":{"editor":null},"onDelete":{"editor":null},"$preview":{"width":640,"height":1900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const b = props.booking;
+    const known = ['Birthday', 'Anniversary', 'High chair', 'Wheelchair access', 'Eat-in deal'];
+    const tags = {};
+    let allergy = '';
+    const otherParts = [];
+    if (b && b.notes) {
+      b.notes.forEach((n) => {
+        if (n.startsWith('Allergy')) {
+          tags['Allergy'] = true;
+          const a = n.replace(/^Allergy:\s*/, '');
+          allergy = a === 'please ask' ? '' : a;
+        } else if (known.includes(n)) {
+          tags[n] = true;
+        } else {
+          otherParts.push(n);
+        }
+      });
+    }
+    this.state = {
+      day: props.startDay ?? 0,
+      time: b ? b.time : null,
+      party: b ? b.party : 2,
+      name: b ? b.name : '',
+      phone: b ? b.phone : '',
+      table: b && b.table && b.table !== 'TBC' ? String(b.table) : '',
+      via: b ? (b.source || 'Phone') : 'Phone',
+      tags, allergy,
+      other: otherParts.join(', '),
+      sendText: true, errors: [], confirmDelete: false
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const fallback = [
+      { i: 0, label: 'Today', date: '16 Oct', closed: false, dow: 5, counts: { '18:30': 2, '19:00': 3, '19:30': 1 } },
+      { i: 1, label: 'Tomorrow', date: '17 Oct', closed: false, dow: 6, counts: { '19:00': 2 } },
+      { i: 2, label: 'Sun', date: '18 Oct', closed: false, dow: 0, counts: {} },
+      { i: 3, label: 'Mon', date: '19 Oct', closed: false, dow: 1, counts: {} },
+      { i: 4, label: 'Tue', date: '20 Oct', closed: false, dow: 2, counts: {} },
+      { i: 5, label: 'Wed', date: '21 Oct', closed: false, dow: 3, counts: {} },
+      { i: 6, label: 'Thu', date: '22 Oct', closed: false, dow: 4, counts: {} }
+    ];
+    const days = this.props.days && this.props.days.length ? this.props.days : fallback;
+    const dayObj = days.find((d) => d.i === s.day) || days[0];
+    const counts = dayObj.counts || {};
+    const editing = this.props.booking || null;
+    const isEdit = !!editing;
+    const origDay = this.props.startDay ?? 0;
+
+    const dayChips = days.map((d) => {
+      const on = d.i === s.day;
+      const look = d.closed ? 'background: #F1E8D4; color: #6B3138; border: 2px dashed #C9B48C; cursor: not-allowed;'
+        : on ? 'background: #7A1F2B; color: #FFFFFF; border: 2px solid #7A1F2B;' : 'background: #FFFFFF; color: #3D0F17; border: 2px solid #B99B6B;';
+      return {
+        label: d.label, sub: d.closed ? 'Closed' : d.date, closed: d.closed, pressed: on ? 'true' : 'false',
+        style: 'flex: none; min-width: 92px; min-height: 64px; padding: 6px 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; font-family: Jost, sans-serif; font-size: 17px; text-align: left; cursor: pointer; ' + look,
+        pick: () => { if (!d.closed) this.setState({ day: d.i, time: null }); }
+      };
+    });
+
+    const mkSlot = (t) => {
+      const on = s.time === t;
+      let n = counts[t] || 0;
+      if (isEdit && dayObj.i === origDay && t === editing.time) n = Math.max(0, n - 1);
+      const busy = n >= 3;
+      return {
+        t,
+        note: n ? n + ' booked' + (busy ? ' · busy' : '') : 'Free',
+        pressed: on ? 'true' : 'false',
+        style: 'min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; font-family: Jost, sans-serif; font-size: 19px; font-weight: 600; cursor: pointer; ' + (on ? 'background: #7A1F2B; color: #FFFFFF; border: 2px solid #7A1F2B;' : 'background: #FFFFFF; color: #3D0F17; border: 2px solid ' + (busy ? '#7A1F2B' : '#B99B6B') + ';'),
+        noteStyle: 'font-size: 14px; ' + (on ? 'color: #F5E9CB;' : busy ? 'color: #7A1F2B; font-weight: 600;' : 'color: #6B3138; font-weight: 400;'),
+        pick: () => this.setState({ time: t, errors: [] })
+      };
+    };
+
+    const viaNames = (editing && editing.source === 'Online') ? ['Online', 'Phone', 'Walk-in', 'Email'] : ['Phone', 'Walk-in', 'Email'];
+    const vias = viaNames.map((v, idx) => {
+      const on = s.via === v;
+      return {
+        label: v, pressed: on ? 'true' : 'false',
+        style: 'flex: 1 1 0; min-height: 56px; padding: 0 12px; font-family: Jost, sans-serif; font-size: 18px; font-weight: 600; cursor: pointer; border: 2px solid #3D0F17; ' + (idx > 0 ? 'margin-left: -2px; ' : '') + (on ? 'background: #3D0F17; color: #FFFFFF;' : 'background: #FFFFFF; color: #3D0F17;'),
+        pick: () => this.setState({ via: v })
+      };
+    });
+
+    const tagNames = ['Allergy', 'Birthday', 'Anniversary', 'High chair', 'Wheelchair access', 'Eat-in deal'];
+    const tags = tagNames.map((n) => {
+      const on = !!s.tags[n];
+      const onLook = n === 'Allergy' ? 'background: #7A1F2B; color: #FFFFFF; border: 2px solid #7A1F2B;' : 'background: #3D0F17; color: #FFFFFF; border: 2px solid #3D0F17;';
+      return {
+        label: (on ? '✓ ' : '') + n, pressed: on ? 'true' : 'false',
+        style: 'min-height: 48px; padding: 0 16px; border-radius: 999px; font-family: Jost, sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; ' + (on ? onLook : 'background: #FFFFFF; color: #3D0F17; border: 2px solid #B99B6B;'),
+        pick: () => this.setState({ tags: { ...this.state.tags, [n]: !on } })
+      };
+    });
+
+    const val = (e) => (e && e.target ? e.target.value : '');
+
+    const save = () => {
+      const errs = [];
+      if (!s.time) errs.push({ text: 'Choose a time.' });
+      if (!s.name.trim()) errs.push({ text: "Enter the customer's name." });
+      if (!s.phone.trim()) errs.push({ text: 'Enter a phone number.' });
+      if (errs.length) { this.setState({ errors: errs }); return; }
+      const notes = [];
+      tagNames.forEach((n) => {
+        if (!s.tags[n]) return;
+        notes.push(n === 'Allergy' ? 'Allergy: ' + (s.allergy.trim() || 'please ask') : n);
+      });
+      if (s.other.trim()) notes.push(s.other.trim());
+      if (this.props.onSave) {
+        this.props.onSave({ id: editing ? editing.id : null, day: dayObj.i, time: s.time, party: s.party, name: s.name.trim(), phone: s.phone.trim(), table: s.table.trim() || 'TBC', source: s.via, notes, sendText: s.sendText });
+      }
+    };
+
+    return {
+      dayChips,
+      slots: (() => {
+        const HOURS = { 0: ['17:00', '22:00'], 1: ['17:30', '22:30'], 2: ['17:30', '22:30'], 3: ['17:30', '22:30'], 4: ['17:30', '22:30'], 5: ['17:00', '23:00'], 6: ['17:00', '23:00'] };
+        const h = HOURS[dayObj.dow ?? 5];
+        const toMin = (x) => parseInt(x.slice(0, 2), 10) * 60 + parseInt(x.slice(3), 10);
+        const res = [];
+        for (let m = toMin(h[0]); m <= toMin(h[1]) - 60; m += 30) res.push(String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'));
+        return res.map(mkSlot);
+      })(),
+      hoursNote: ['Open 5–10 pm.', 'Open 5:30–10:30 pm.', 'Open 5:30–10:30 pm.', 'Open 5:30–10:30 pm.', 'Open 5:30–10:30 pm.', 'Open 5–11 pm.', 'Open 5–11 pm.'][dayObj.dow ?? 5],
+      vias, tags,
+      party: s.party,
+      form: { name: s.name, phone: s.phone, table: s.table, allergy: s.allergy, other: s.other, sendText: s.sendText },
+      isEdit,
+      title: isEdit ? 'Edit booking' : 'Add a booking',
+      saveLabel: isEdit ? 'Save changes' : 'Save booking',
+      closeLabel: isEdit ? 'Discard changes' : 'Cancel',
+      textLabel: isEdit ? 'Text the customer about the change' : 'Send the customer a confirmation text',
+      confirming: !!s.confirmDelete,
+      notConfirming: !s.confirmDelete,
+      askDelete: () => this.setState({ confirmDelete: true }),
+      keepBooking: () => this.setState({ confirmDelete: false }),
+      doDelete: () => { if (this.props.onDelete && editing) this.props.onDelete(editing.id); },
+      allergyOn: !!s.tags['Allergy'],
+      errors: s.errors,
+      hasErrors: s.errors.length > 0,
+      summary: dayObj.label + ' ' + dayObj.date + ' · ' + (s.time || 'no time chosen') + ' · ' + s.party + (s.party === 1 ? ' guest' : ' guests'),
+      inc: () => this.setState({ party: Math.min(30, s.party + 1) }),
+      dec: () => this.setState({ party: Math.max(1, s.party - 1) }),
+      setName: (e) => this.setState({ name: val(e) }),
+      setPhone: (e) => this.setState({ phone: val(e) }),
+      setTable: (e) => this.setState({ table: val(e) }),
+      setAllergy: (e) => this.setState({ allergy: val(e) }),
+      setOther: (e) => this.setState({ other: val(e) }),
+      setSendText: (e) => this.setState({ sendText: !!(e && e.target && e.target.checked) }),
+      save,
+      cancel: () => { if (this.props.onCancel) this.props.onCancel(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Staff bookings · Raj Durbar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,700;1,700&amp;family=Jost:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FBF6EA}
+a{color:#7A1F2B}a:hover{color:#3D0F17}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #FBF6EA; color: #3D0F17; font-family: 'Jost', sans-serif; font-size: 18px; line-height: 1.5">
+
+  <header style="background: #3D0F17; color: #F5E9CB">
+    <div style="max-width: 1320px; margin: 0 auto; padding: 16px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px">
+      <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap">
+        <span style="font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700">Raj <span style="color: {{accent}}; font-style: italic">Durbar</span></span>
+        <span style="font-size: 18px; font-weight: 600; padding: 2px 12px; border: 2px solid {{accent}}; color: {{accent}}">Staff · Bookings</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <button type="button" onClick="{{openAdd}}" aria-haspopup="dialog" style="min-height: 52px; padding: 0 20px; background: {{accent}}; color: #3D0F17; border: none; font-family: 'Jost', sans-serif; font-size: 18px; font-weight: 600; cursor: pointer">+ Add a booking</button>
+        <button type="button" style="min-height: 52px; padding: 0 20px; background: transparent; color: #F5E9CB; border: 2px solid #F5E9CB; font-family: 'Jost', sans-serif; font-size: 18px; font-weight: 500; cursor: pointer">Print this day</button>
+        <span style="font-size: 16px; color: #E6D3A8; padding: 0 6px">Signed in as [STAFF NAME]</span>
+        <button type="button" style="min-height: 52px; padding: 0 16px; background: transparent; color: #F5E9CB; border: none; text-decoration: underline; font-family: 'Jost', sans-serif; font-size: 17px; cursor: pointer">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <nav aria-label="Choose a day" style="background: #FFFFFF; border-bottom: 1px solid #E7D9B8">
+    <div style="max-width: 1320px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; gap: 10px; overflow-x: auto">
+      <sc-for list="{{chips}}" as="c" hint-placeholder-count="7">
+        <button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" disabled="{{c.closed}}" style="{{c.style}}">
+          <span style="font-size: 18px; font-weight: 600">{{c.label}}</span>
+          <span style="font-size: 15px">{{c.date}}</span>
+          <span style="font-size: 15px; font-weight: 600">{{c.count}}</span>
+        </button>
+      </sc-for>
+      <div style="flex: none; display: flex; flex-direction: column; gap: 2px; margin-left: 8px">
+        <label for="jump-date" style="font-size: 15px; font-weight: 600">Later date</label>
+        <input id="jump-date" type="date" style="height: 48px; padding: 0 10px; font-family: 'Jost', sans-serif; font-size: 17px; color: #3D0F17; border: 2px solid #B99B6B; background: #FFFFFF">
+      </div>
+    </div>
+  </nav>
+
+  <main style="max-width: 1320px; margin: 0 auto; padding: 28px 24px 64px; display: flex; flex-direction: column; gap: 24px">
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px">
+      <h1 style="margin: 0; font-size: 34px; font-weight: 600; line-height: 1.15">{{heading}}</h1>
+      <sc-if value="{{isToday}}" hint-placeholder-val="{{ true }}">
+        <span style="padding: 4px 14px; background: {{accent}}; color: #3D0F17; font-size: 16px; font-weight: 600">Today</span>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; background: #3D0F17; color: #F5E9CB; border-left: 8px solid {{accent}}">
+        <span style="font-size: 19px; font-weight: 500">✓ {{toast}}</span>
+        <button type="button" onClick="{{dismissToast}}" style="min-height: 48px; padding: 0 16px; background: transparent; color: #F5E9CB; border: 2px solid #F5E9CB; font-family: 'Jost', sans-serif; font-size: 17px; cursor: pointer">OK</button>
+      </div>
+    </sc-if>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px">
+      <div style="background: #FFFFFF; border: 1px solid #E7D9B8; padding: 18px 20px; display: flex; flex-direction: column"><span style="font-size: 16px; color: #6B3138">Bookings</span><span style="font-size: 40px; font-weight: 600; line-height: 1.1">{{stats.bookings}}</span></div>
+      <div style="background: #FFFFFF; border: 1px solid #E7D9B8; padding: 18px 20px; display: flex; flex-direction: column"><span style="font-size: 16px; color: #6B3138">Guests expected</span><span style="font-size: 40px; font-weight: 600; line-height: 1.1">{{stats.guests}}</span></div>
+      <div style="background: #FFFFFF; border: 1px solid #E7D9B8; padding: 18px 20px; display: flex; flex-direction: column"><span style="font-size: 16px; color: #6B3138">Arrived</span><span style="font-size: 40px; font-weight: 600; line-height: 1.1">{{stats.arrived}}</span></div>
+      <div style="background: #3D0F17; color: #F5E9CB; padding: 18px 20px; display: flex; flex-direction: column"><span style="font-size: 16px; color: #E6D3A8">Still to come</span><span style="font-size: 40px; font-weight: 600; line-height: 1.1">{{stats.toCome}}</span></div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 36px; align-items: flex-start">
+
+      <section aria-label="Bookings list" style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+          <div role="group" aria-label="Show" style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+              <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="{{f.style}}">{{f.label}}</button>
+            </sc-for>
+          </div>
+          <div style="flex: 0 1 320px; display: flex; flex-direction: column; gap: 4px">
+            <label for="staff-search" style="font-size: 15px; font-weight: 600">Find a booking</label>
+            <input id="staff-search" type="search" onChange="{{onSearch}}" placeholder="Name or phone number" style="height: 52px; padding: 0 14px; font-family: 'Jost', sans-serif; font-size: 18px; color: #3D0F17; border: 2px solid #B99B6B; background: #FFFFFF; box-sizing: border-box; width: 100%">
+          </div>
+        </div>
+
+        <sc-if value="{{isClosed}}" hint-placeholder-val="{{ false }}">
+          <div style="background: #FFFFFF; border: 1px solid #E7D9B8; padding: 40px 28px; text-align: center; display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 24px; font-weight: 600">Closed</span>
+            <span style="color: #6B3138">There are no bookings for this day.</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{noResults}}" hint-placeholder-val="{{ false }}">
+          <div style="background: #FFFFFF; border: 1px solid #E7D9B8; padding: 40px 28px; text-align: center; font-size: 20px">No bookings match. Try another name, or show all.</div>
+        </sc-if>
+
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="5">
+          <div style="background: #FFFFFF; border: 1px solid #E7D9B8">
+            <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding: 12px 20px; background: #F4EAD3">
+              <span style="font-size: 28px; font-weight: 600">{{g.time}}</span>
+              <span style="font-size: 16px; color: #6B3138">{{g.summary}}</span>
+            </div>
+            <sc-for list="{{g.items}}" as="b" hint-placeholder-count="2">
+              <article style="{{b.rowStyle}}">
+                <div style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+                  <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px">
+                    <h3 style="margin: 0; font-size: 22px; font-weight: 600">{{b.name}}</h3>
+                    <span style="font-size: 19px; font-weight: 600; color: #7A1F2B">{{b.partyLabel}}</span>
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 2px 18px; font-size: 16px; color: #6B3138">
+                    <span>Table {{b.table}}</span>
+                    <span>{{b.phone}}</span>
+                    <span>{{b.sourceLabel}}</span>
+                  </div>
+                  <sc-if value="{{b.hasTags}}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px">
+                      <sc-for list="{{b.tags}}" as="tag" hint-placeholder-count="1">
+                        <span style="{{tag.style}}">{{tag.label}}</span>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+                <div style="flex: none; display: flex; flex-wrap: wrap; gap: 10px">
+                  <button type="button" onClick="{{b.edit}}" aria-haspopup="dialog" aria-label="{{b.editAria}}" style="min-height: 52px; padding: 0 18px; background: #FFFFFF; color: #3D0F17; border: 2px solid #3D0F17; font-family: 'Jost', sans-serif; font-size: 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>Edit</button>
+                  <button type="button" onClick="{{b.toggle}}" aria-pressed="{{b.pressed}}" aria-label="{{b.btnAria}}" style="{{b.btnStyle}}">{{b.btnLabel}}</button>
+                </div>
+              </article>
+            </sc-for>
+          </div>
+        </sc-for>
+      </section>
+
+      <aside aria-label="Day notes" style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 18px">
+        <div style="background: #FFFFFF; border: 2px solid #7A1F2B; padding: 22px; display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600">Needs attention</h2>
+          <sc-if value="{{noAttention}}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 0; color: #6B3138">Nothing special noted.</p>
+          </sc-if>
+          <sc-for list="{{attention}}" as="a" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column; gap: 2px; padding-top: 10px; border-top: 1px solid #EADFC6">
+              <span style="font-weight: 600">{{a.time}} · {{a.name}} ({{a.party}})</span>
+              <span style="font-size: 16px; color: #7A1F2B; font-weight: 600">{{a.reason}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E7D9B8; padding: 22px; display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 600">The evening</h2>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid #EADFC6"><span>Open</span><span style="font-weight: 600">{{hoursToday}}</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid #EADFC6"><span>Last table</span><span style="font-weight: 600">{{lastTable}}</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid #EADFC6"><span>Before 7 pm</span><span style="font-weight: 600">{{shift.lunch}}</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid #EADFC6"><span>7 pm onwards</span><span style="font-weight: 600">{{shift.dinner}}</span></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <sc-if value="{{adding}}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 40; background: rgba(30, 8, 12, 0.6); display: flex; justify-content: flex-end; overflow-y: auto">
+      <div style="width: 100%; max-width: 640px; min-height: 100%; background: #FFFFFF; display: flex">
+        <dc-import name="AddBooking" days="{{addDays}}" start-day="{{currentDay}}" on-save="{{saveNew}}" on-cancel="{{closeAdd}}" hint-size="100%,1900px"></dc-import>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isEditing}}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 40; background: rgba(30, 8, 12, 0.6); display: flex; justify-content: flex-end; overflow-y: auto">
+      <div style="width: 100%; max-width: 640px; min-height: 100%; background: #FFFFFF; display: flex">
+        <dc-import name="AddBooking" days="{{addDays}}" start-day="{{editDay}}" booking="{{editBooking}}" on-save="{{saveEdit}}" on-delete="{{deleteBooking}}" on-cancel="{{closeEdit}}" hint-size="100%,1950px"></dc-import>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#E8C878","options":["#E8C878","#D9B45A","#F1E2B8"]},"$preview":{"width":1440,"height":2800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { day: 0, filter: 'all', query: '', arrived: {}, adding: false, added: {}, toast: '', editing: null, edits: {}, removed: {} };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#E8C878';
+    const wdShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const wdLong = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    const today = [
+      { id: 't1', time: '17:00', name: 'Margaret Hill', party: 2, table: '4', phone: '07700 900101', source: 'Phone', notes: ['Window seat'] },
+      { id: 't2', time: '17:30', name: 'Patel family', party: 5, table: '9', phone: '07700 900102', source: 'Online', notes: ['High chair'] },
+      { id: 't3', time: '17:30', name: 'David Okafor', party: 2, table: '3', phone: '07700 900103', source: 'Online', notes: [] },
+      { id: 't4', time: '18:00', name: 'Jean Fletcher', party: 4, table: '7', phone: '07700 900104', source: 'Phone', notes: ['Allergy: peanuts'] },
+      { id: 't5', time: '21:30', name: 'Sunita Rai', party: 3, table: '5', phone: '07700 900105', source: 'Online', notes: ['Eat-in deal'] },
+      { id: 't6', time: '18:00', name: 'Robert Ellis', party: 2, table: '1', phone: '07700 900106', source: 'Phone', notes: ['Wheelchair access'] },
+      { id: 't7', time: '18:30', name: 'Gurung party', party: 8, table: '10 + 11', phone: '07700 900107', source: 'Phone', notes: ['Birthday', 'Set menu'] },
+      { id: 't8', time: '18:30', name: 'Helen Barker', party: 2, table: '2', phone: '07700 900108', source: 'Online', notes: [] },
+      { id: 't9', time: '19:00', name: 'Amir Khan', party: 4, table: '6', phone: '07700 900109', source: 'Online', notes: ['Allergy: gluten'] },
+      { id: 't10', time: '19:00', name: 'Anil Thapa', party: 2, table: '3', phone: '07700 900110', source: 'Online', notes: ['Eat-in deal'] },
+      { id: 't11', time: '19:30', name: 'Christine Wood', party: 6, table: '8', phone: '07700 900111', source: 'Phone', notes: ['Anniversary'] },
+      { id: 't12', time: '20:00', name: 'Tom Ashworth', party: 2, table: '4', phone: '07700 900112', source: 'Online', notes: [] },
+      { id: 't13', time: '20:30', name: 'Priya Sharma', party: 3, table: '5', phone: '07700 900113', source: 'Online', notes: ['Allergy: dairy'] },
+      { id: 't14', time: '21:00', name: 'Mark Lewis', party: 2, table: '2', phone: '07700 900114', source: 'Phone', notes: [] }
+    ];
+    const pool = ['Susan Clarke', 'Raj Mehta', 'Pemba Sherpa', 'Linda Morris', 'James Carter', 'Anita Shrestha', 'Peter Hughes', 'Kamala Devi', 'Brian Taylor', 'Fatima Begum', 'George Walsh', 'Sarah Green', 'Bishnu Tamang', 'Carol Price', 'Neil Robinson', 'Meena Joshi'];
+    const HOURS = { 0: ['17:00', '22:00', '5–10 pm'], 1: ['17:30', '22:30', '5:30–10:30 pm'], 2: ['17:30', '22:30', '5:30–10:30 pm'], 3: ['17:30', '22:30', '5:30–10:30 pm'], 4: ['17:30', '22:30', '5:30–10:30 pm'], 5: ['17:00', '23:00', '5–11 pm'], 6: ['17:00', '23:00', '5–11 pm'] };
+    const toMin = (s) => parseInt(s.slice(0, 2), 10) * 60 + parseInt(s.slice(3), 10);
+    const fromMin = (m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    const slotsFor = (dow) => { const h = HOURS[dow]; const res = []; for (let m = toMin(h[0]); m <= toMin(h[1]) - 60; m += 30) res.push(fromMin(m)); return res; };
+    const notePool = [[], ['Allergy: nuts'], [], ['Birthday'], [], ['High chair'], [], ['Eat-in deal'], [], ['Allergy: shellfish'], ['Wheelchair access'], []];
+    const counts = [0, 11, 9, 6, 5, 6, 8];
+    const baseBuild = (i) => {
+      const extra = this.state.added[i] || [];
+      if (i === 0) return today.concat(extra).sort((a, b) => a.time.localeCompare(b.time));
+      const out = [];
+      const tl = slotsFor(new Date(2026, 9, 16 + i).getDay());
+      for (let k = 0; k < counts[i]; k++) {
+        out.push({
+          id: 'd' + i + '-' + k,
+          time: tl[(k * 4 + i) % tl.length],
+          name: pool[(k * 5 + i * 3) % pool.length],
+          party: 2 + ((k * 3 + i) % 5),
+          table: String(1 + ((k * 5 + i) % 11)),
+          phone: '07700 900' + String(200 + i * 20 + k),
+          source: k % 3 === 0 ? 'Phone' : 'Online',
+          notes: notePool[(k + i) % notePool.length]
+        });
+      }
+      return out.concat(extra).sort((a, b) => a.time.localeCompare(b.time));
+    };
+    const edits = this.state.edits;
+    const removed = this.state.removed;
+    const build = (i) => {
+      const base = baseBuild(i)
+        .filter((b) => !removed[b.id] && !(edits[b.id] && edits[b.id].day !== i))
+        .map((b) => (edits[b.id] ? { ...b, ...edits[b.id], edited: true } : b));
+      const movedIn = Object.keys(edits).map((k) => edits[k])
+        .filter((e) => e.day === i && e.origDay !== i && !removed[e.id])
+        .map((e) => ({ ...e, edited: true }));
+      return base.concat(movedIn).sort((a, b) => a.time.localeCompare(b.time));
+    };
+
+    const days = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+      const d = new Date(2026, 9, 16 + i);
+      const closed = false;
+      return {
+        i, closed,
+        short: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : wdShort[d.getDay()],
+        dateShort: d.getDate() + ' ' + months[d.getMonth()].slice(0, 3),
+        long: wdLong[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()],
+        list: closed ? [] : build(i)
+      };
+    });
+
+    const sel = days[this.state.day];
+    const arrivedMap = this.state.arrived;
+    const isLunch = (t) => t < '19:00';
+
+    const chips = days.map((d) => {
+      const on = d.i === this.state.day;
+      const base = 'flex: none; min-width: 112px; min-height: 76px; padding: 8px 14px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; font-family: Jost, sans-serif; text-align: left; cursor: pointer; ';
+      const look = d.closed
+        ? 'background: #F1E8D4; color: #6B3138; border: 2px dashed #C9B48C; cursor: not-allowed;'
+        : on ? 'background: #7A1F2B; color: #FFFFFF; border: 2px solid #7A1F2B;'
+          : 'background: #FFFFFF; color: #3D0F17; border: 2px solid #B99B6B;';
+      return {
+        label: d.short,
+        date: d.dateShort,
+        count: d.closed ? 'Closed' : d.list.length + ' bookings',
+        closed: d.closed,
+        pressed: on ? 'true' : 'false',
+        style: base + look,
+        pick: () => { if (!d.closed) this.setState({ day: d.i, query: '' }); }
+      };
+    });
+
+    const all = sel.list;
+    const guestsOf = (xs) => xs.reduce((s, b) => s + b.party, 0);
+    const arrivedCount = all.filter((b) => arrivedMap[b.id]).length;
+    const lunchList = all.filter((b) => isLunch(b.time));
+    const dinnerList = all.filter((b) => !isLunch(b.time));
+
+    const fdefs = [
+      { id: 'all', label: 'All (' + all.length + ')' },
+      { id: 'lunch', label: 'Before 7 pm (' + lunchList.length + ')' },
+      { id: 'dinner', label: '7 pm onwards (' + dinnerList.length + ')' }
+    ];
+    const filters = fdefs.map((f) => {
+      const on = this.state.filter === f.id;
+      return {
+        label: f.label,
+        pressed: on ? 'true' : 'false',
+        style: 'min-height: 52px; padding: 0 20px; font-family: Jost, sans-serif; font-size: 18px; font-weight: 600; cursor: pointer; border: 2px solid #3D0F17; ' + (on ? 'background: #3D0F17; color: #FFFFFF;' : 'background: #FFFFFF; color: #3D0F17;'),
+        pick: () => this.setState({ filter: f.id })
+      };
+    });
+
+    const q = (this.state.query || '').trim().toLowerCase();
+    let shown = this.state.filter === 'lunch' ? lunchList : this.state.filter === 'dinner' ? dinnerList : all;
+    if (q) shown = shown.filter((b) => b.name.toLowerCase().includes(q) || b.phone.replace(/\s/g, '').includes(q.replace(/\s/g, '')));
+
+    const tagStyle = (n) => {
+      const base = 'display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border-radius: 999px; font-size: 16px; font-weight: 600; ';
+      if (n.startsWith('Allergy')) return base + 'background: #7A1F2B; color: #FFFFFF;';
+      if (n === 'Birthday' || n === 'Anniversary') return base + 'background: ' + accent + '; color: #3D0F17;';
+      return base + 'background: #FFFFFF; color: #3D0F17; border: 2px solid #B99B6B;';
+    };
+
+    const toRow = (b) => {
+      const arr = !!arrivedMap[b.id];
+      return {
+        name: b.name,
+        table: b.table,
+        phone: b.phone,
+        sourceLabel: (b.source === 'Phone' ? 'Booked by phone' : b.source === 'Walk-in' ? 'Walk-in' : b.source === 'Email' ? 'Booked by email' : 'Booked online') + (b.edited ? ' · Changed' : ''),
+        editAria: 'Edit booking for ' + b.name,
+        edit: () => this.setState({ editing: { day: sel.i, booking: { id: b.id, time: b.time, party: b.party, name: b.name, phone: b.phone, table: b.table, source: b.source, notes: b.notes } } }),
+        partyLabel: b.party + (b.party === 1 ? ' guest' : ' guests'),
+        hasTags: b.notes.length > 0,
+        tags: b.notes.map((n) => ({ label: n, style: tagStyle(n) })),
+        pressed: arr ? 'true' : 'false',
+        btnLabel: arr ? '✓ Arrived' : 'Mark arrived',
+        btnAria: arr ? b.name + ' has arrived. Press to undo.' : 'Mark ' + b.name + ' as arrived',
+        rowStyle: 'display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 18px 20px; border-top: 1px solid #EADFC6; background: ' + (arr ? '#EFE5CC' : '#FFFFFF') + ';',
+        btnStyle: 'flex: none; min-height: 52px; min-width: 160px; padding: 0 18px; font-family: Jost, sans-serif; font-size: 18px; font-weight: 600; cursor: pointer; ' + (arr ? 'background: #3D0F17; color: #FFFFFF; border: 2px solid #3D0F17;' : 'background: #FFFFFF; color: #7A1F2B; border: 2px solid #7A1F2B;'),
+        toggle: () => this.setState({ arrived: { ...this.state.arrived, [b.id]: !arr } })
+      };
+    };
+
+    const groups = [];
+    shown.forEach((b) => {
+      let g = groups.find((x) => x.time === b.time);
+      if (!g) { g = { time: b.time, raw: [] }; groups.push(g); }
+      g.raw.push(b);
+    });
+    const groupsOut = groups.map((g) => {
+      const n = g.raw.length;
+      return {
+        time: g.time,
+        summary: n + (n === 1 ? ' booking' : ' bookings') + ' · ' + guestsOf(g.raw) + ' guests',
+        items: g.raw.map(toRow)
+      };
+    });
+
+    const attention = [];
+    all.forEach((b) => {
+      const reasons = b.notes.filter((n) => n.startsWith('Allergy') || n === 'Birthday' || n === 'Anniversary' || n === 'Wheelchair access');
+      if (b.party >= 6) reasons.push('Large party');
+      if (reasons.length) attention.push({ time: b.time, name: b.name, party: b.party, reason: reasons.join(' · ') });
+    });
+
+    const shiftText = (xs) => xs.length ? xs.length + ' bookings · ' + guestsOf(xs) + ' guests' : 'None';
+
+    return {
+      accent,
+      chips,
+      filters,
+      heading: sel.long,
+      isToday: sel.i === 0,
+      isClosed: sel.closed,
+      noResults: !sel.closed && groupsOut.length === 0,
+      groups: groupsOut,
+      attention,
+      noAttention: attention.length === 0,
+      stats: { bookings: all.length, guests: guestsOf(all), arrived: arrivedCount, toCome: all.length - arrivedCount },
+      shift: { lunch: shiftText(lunchList), dinner: shiftText(dinnerList) },
+      hoursToday: HOURS[new Date(2026, 9, 16 + sel.i).getDay()][2],
+      lastTable: (() => { const s = slotsFor(new Date(2026, 9, 16 + sel.i).getDay()); return s[s.length - 1]; })(),
+      onSearch: (e) => this.setState({ query: e && e.target ? e.target.value : '' }),
+      adding: this.state.adding,
+      currentDay: this.state.day,
+      addDays: days.map((d) => {
+        const c = {};
+        d.list.forEach((b) => { c[b.time] = (c[b.time] || 0) + 1; });
+        return { i: d.i, label: d.short, date: d.dateShort, closed: d.closed, counts: c, dow: new Date(2026, 9, 16 + d.i).getDay() };
+      }),
+      openAdd: () => this.setState({ adding: true }),
+      closeAdd: () => this.setState({ adding: false }),
+      saveNew: (b) => {
+        const list = (this.state.added[b.day] || []).concat([{ id: 'n' + Date.now(), time: b.time, name: b.name, party: b.party, table: b.table, phone: b.phone, source: b.source, notes: b.notes }]);
+        const when = days[b.day] ? days[b.day].long : '';
+        this.setState({
+          added: { ...this.state.added, [b.day]: list },
+          adding: false, day: b.day, filter: 'all', query: '',
+          toast: 'Booking added: ' + b.name + ', ' + b.party + ' guests at ' + b.time + ' on ' + when + (b.sendText ? '. Confirmation text sent.' : '.')
+        });
+      },
+      isEditing: !!this.state.editing,
+      editDay: this.state.editing ? this.state.editing.day : 0,
+      editBooking: this.state.editing ? this.state.editing.booking : null,
+      closeEdit: () => this.setState({ editing: null }),
+      saveEdit: (b) => {
+        const prev = this.state.edits[b.id];
+        const origDay = prev ? prev.origDay : (this.state.editing ? this.state.editing.day : b.day);
+        const when = days[b.day] ? days[b.day].long : '';
+        this.setState({
+          edits: { ...this.state.edits, [b.id]: { id: b.id, day: b.day, origDay, time: b.time, party: b.party, name: b.name, phone: b.phone, table: b.table, source: b.source, notes: b.notes } },
+          editing: null, day: b.day, filter: 'all', query: '',
+          toast: 'Booking updated: ' + b.name + ', ' + b.party + ' guests at ' + b.time + ' on ' + when + (b.sendText ? '. Customer texted about the change.' : '.')
+        });
+      },
+      deleteBooking: (id) => {
+        const bk = this.state.editing ? this.state.editing.booking : null;
+        this.setState({
+          removed: { ...this.state.removed, [id]: true },
+          editing: null,
+          toast: 'Booking cancelled' + (bk ? ': ' + bk.name + ' at ' + bk.time : '') + '.'
+        });
+      },
+      hasToast: !!this.state.toast,
+      toast: this.state.toast,
+      dismissToast: () => this.setState({ toast: '' })
+    };
+  }
+}
+</script>
+</body>
+</html>
