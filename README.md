@@ -24,7 +24,8 @@ infra/
     staging/        wires the modules together for staging
 ```
 
-Start with **[docs/aws-setup.md](docs/aws-setup.md)**.
+Start with **[docs/aws-setup.md](docs/aws-setup.md)**. What we're building is in
+**[docs/requirements.md](docs/requirements.md)**.
 
 ## Ground rules
 
