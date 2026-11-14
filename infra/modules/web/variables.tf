@@ -2,6 +2,23 @@ variable "name" {
   type = string
 }
 
+variable "aliases" {
+  description = "Custom hostnames for the distribution, e.g. [\"staging.rajdurbar.co.uk\"]. Empty = CloudFront address only."
+  type        = list(string)
+  default     = []
+}
+
+variable "acm_certificate_arn" {
+  description = "ISSUED ACM certificate in us-east-1 covering every alias. Required when aliases is set."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = length(var.aliases) == 0 || var.acm_certificate_arn != ""
+    error_message = "Set acm_certificate_arn when aliases are given."
+  }
+}
+
 variable "api_origin_domain" {
   description = "Backend hostname (no https://). Empty until the API is deployed."
   type        = string

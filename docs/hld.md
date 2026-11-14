@@ -287,8 +287,9 @@ This is at the top of the £30–50 target, and staging roughly doubles it while
 
 ## 7. Build order
 
-1. `modules/dns`: Route 53 zone with **copies of all GoDaddy/M365 records**, ACM certificates,
-   SES domain identity. Nameservers aren't switched yet.
+1. ✅ `modules/dns` + `envs/shared`: Route 53 zone with **copies of all live Wix/M365 records**
+   (website still on Wix), ACM certificate, SES identity. Then switch the GoDaddy nameservers, following
+   [dns-migration.md](dns-migration.md).
 2. `modules/api`: ECS Express Mode service, ALB, task role (IAM DB auth, SES send), log group,
    origin-verify secret. Then wire `api_origin_domain` into `modules/web`.
 3. `web/` (Astro) and `api/` (Spring Boot + Flyway) code, plus GitHub Actions workflows (`ci.yml`, `deploy.yml`).

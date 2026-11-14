@@ -20,13 +20,15 @@ infra/
     database/       RDS Postgres, private, encrypted, TLS-only, managed password
     ecr/            container registry, immutable tags, scan on push
     web/            private S3 + CloudFront, security headers, /api routing
+    dns/            Route 53 zone (M365 + website records), ACM cert, SES identity
   envs/
+    shared/         domain-wide: DNS zone, certificate, SES (apply first)
     staging/        wires the modules together for staging
 ```
 
 Start with **[docs/aws-setup.md](docs/aws-setup.md)**. What we're building is in
 **[docs/requirements.md](docs/requirements.md)**, and how it fits together on AWS is in
-**[docs/hld.md](docs/hld.md)**.
+**[docs/hld.md](docs/hld.md)**. Track progress in **[docs/checklist.md](docs/checklist.md)**.
 
 ## Ground rules
 

@@ -115,27 +115,41 @@ Booking states: `PENDING → CONFIRMED | DECLINED`, and staff can set `CANCELLED
 
 ## 3. Domain, DNS and email
 
-Current state: `rajdurbar.co.uk` is **registered at GoDaddy** and points to **Wix**. Email is
-**Microsoft 365 via GoDaddy**.
+Current state (checked 14 Nov 2026):
 
-Decisions:
+| What | Provider today |
+|---|---|
+| Domain registration | GoDaddy |
+| DNS | **Wix** (`ns14/ns15.wixdns.net`) |
+| Website | Wix |
+| Email | Microsoft 365, **bought through GoDaddy**. One mailbox, `info@rajdurbar.co.uk`, used for email only |
 
-- **Registration stays at GoDaddy.**
-- **DNS moves to Route 53**, managed by Terraform (about $0.50/month). This lets the bare domain
-  alias straight to CloudFront and keeps every record in code.
-- **Email must keep working.** Before changing nameservers, export every current record and recreate
-  them in Route 53 exactly:
-  - MX (M365)
-  - `autodiscover` CNAME
-  - SPF TXT
-  - DKIM CNAMEs (`selector1._domainkey`, `selector2._domainkey`)
-  - DMARC TXT
-  - any `MS=` or other verification TXT records
-  - anything else that's present (e.g. Google site verification)
+**Goal: leave Wix and GoDaddy entirely** to cut costs. Decisions:
+
+| What | Moves to | Approx. cost after |
+|---|---|---|
+| DNS | **Route 53**, managed by Terraform | $0.50/month |
+| Website | AWS (this project); cancel Wix after cutover | in the HLD estimate |
+| Domain registration | **Route 53 Domains** | about $9–10/year for `.co.uk` (confirm on the AWS price list) |
+| Email | **Exchange Online (Plan 1), bought directly from Microsoft**: email-only, 50 GB, Outlook apps. Same mailbox and address, no data migration | about £3–4/month |
+
+Do these in order. Each step is independent and can be undone. The guides are in [dns-migration.md](dns-migration.md).
+
+1. DNS → Route 53 (website still on Wix, email unchanged).
+2. Domain registration → Route 53 Domains.
+3. Microsoft 365 → direct with Microsoft (take the account over from GoDaddy, then cancel GoDaddy's subscription).
+4. Website → AWS, then cancel Wix.
+
+Rules:
+
+- **Email must keep working.** Every live record is copied into Route 53 exactly (MX, autodiscover,
+  M365 verification TXT, device-management and Skype/Teams CNAME/SRV records). The old zone had
+  **two SPF records**, which is invalid, so they're merged into one. DMARC is added in monitor mode.
+  M365 DKIM is turned on after the move.
 - **SES:**
   - verify the domain using Easy DKIM CNAMEs;
-  - merge SES into the **single** existing SPF record, not a second one;
-  - set up a custom MAIL FROM subdomain (e.g. `mail.rajdurbar.co.uk`) so DMARC alignment passes;
+  - set up a custom MAIL FROM subdomain (`mail.rajdurbar.co.uk`) with its own SPF, so the apex SPF
+    record doesn't change and DMARC alignment passes;
   - request SES production access (move out of the sandbox) before launch.
 - **TLS:** an ACM certificate in **us-east-1** (required by CloudFront) for `rajdurbar.co.uk` and
   `www.rajdurbar.co.uk`, DNS-validated in Route 53. Both names alias to CloudFront, and `www`
@@ -148,17 +162,19 @@ Decisions:
 | Staging | `staging.rajdurbar.co.uk` | Deploys from `main` automatically |
 | Production | `rajdurbar.co.uk` | Deploys need approval in the GitHub `production` environment |
 
-Cutover from Wix:
+Cutover from Wix happens in **two separate, low-risk phases**. The step-by-step guide is
+[dns-migration.md](dns-migration.md).
 
-1. Build and test everything on staging.
-2. Create the Route 53 hosted zone with all copied records, plus the new site records.
-3. Check the zone by querying the Route 53 nameservers directly (`nslookup -type=MX rajdurbar.co.uk <ns>`).
-4. On a quiet day, change the nameservers in GoDaddy to the Route 53 ones.
-5. Check the website, sending and receiving email in M365, and an SES test email (DKIM/SPF/DMARC pass).
-6. Keep Wix running for about 2 weeks as a fallback, then cancel it. Export anything needed from Wix
-   first: photos, menu text, any customer list.
+1. **Move DNS first (now):** create the Route 53 zone as an exact copy of the current Wix zone,
+   *including* the records that point the website at Wix. Then switch the nameservers in GoDaddy
+   (currently `ns14/ns15.wixdns.net`). Visitors and email see no change. This unlocks the
+   certificate, SES and `staging.rajdurbar.co.uk`.
+2. **Move the website later:** when production is built and tested on staging, switch only the
+   apex and `www` records from Wix to CloudFront (one Terraform change, reversible). Keep Wix about
+   2 weeks as a fallback, then cancel it.
 
-Rollback: switch the nameservers in GoDaddy back to the previous values. Note them down before step 4.
+Rollback: phase 1, switch the GoDaddy nameservers back to the Wix ones. Phase 2, set the website
+records back to Wix.
 
 ## 5. Non-functional requirements
 

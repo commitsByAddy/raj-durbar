@@ -30,8 +30,37 @@ provider "aws" {
 }
 
 locals {
-  region = "eu-west-2"
-  name   = "rajdurbar-staging"
+  region   = "eu-west-2"
+  name     = "rajdurbar-staging"
+  domain   = "rajdurbar.co.uk"
+  hostname = "staging.${local.domain}"
+}
+
+variable "use_custom_domain" {
+  description = <<-EOT
+    Serve staging at staging.rajdurbar.co.uk. Needs envs/shared applied, the
+    GoDaddy nameservers moved to Route 53, and the certificate ISSUED.
+  EOT
+  type        = bool
+  default     = false
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
+data "aws_route53_zone" "main" {
+  count = var.use_custom_domain ? 1 : 0
+  name  = local.domain
+}
+
+data "aws_acm_certificate" "site" {
+  count       = var.use_custom_domain ? 1 : 0
+  provider    = aws.us_east_1
+  domain      = local.domain
+  statuses    = ["ISSUED"]
+  most_recent = true
 }
 
 module "network" {
@@ -59,6 +88,23 @@ module "web" {
   name   = local.name
   # api_origin_domain and origin_verify_secret are wired in once the API module
   # (ECS Express Mode) is added alongside the backend code.
+
+  aliases             = var.use_custom_domain ? [local.hostname] : []
+  acm_certificate_arn = var.use_custom_domain ? data.aws_acm_certificate.site[0].arn : ""
+}
+
+resource "aws_route53_record" "staging" {
+  for_each = var.use_custom_domain ? toset(["A", "AAAA"]) : toset([])
+
+  zone_id = data.aws_route53_zone.main[0].zone_id
+  name    = local.hostname
+  type    = each.value
+
+  alias {
+    name                   = module.web.distribution_domain_name
+    zone_id                = "Z2FDTNDATAQYW2" # CloudFront's fixed hosted zone ID
+    evaluate_target_health = false
+  }
 }
 
 output "site_url" {
