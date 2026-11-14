@@ -25,7 +25,8 @@ infra/
 ```
 
 Start with **[docs/aws-setup.md](docs/aws-setup.md)**. What we're building is in
-**[docs/requirements.md](docs/requirements.md)**.
+**[docs/requirements.md](docs/requirements.md)**, and how it fits together on AWS is in
+**[docs/hld.md](docs/hld.md)**.
 
 ## Ground rules
 
