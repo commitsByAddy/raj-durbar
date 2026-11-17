@@ -113,6 +113,15 @@ This requests the certificate and waits until ACM marks it **ISSUED**, usually 5
 renews it automatically after that. Commit the change so the setting stays in the file and later
 applies keep the certificate.
 
+**Later, adding a name to the certificate** (`certificate_subdomains`) replaces it. Terraform
+issues the new certificate first, but can't delete the old one while CloudFront still uses it:
+
+1. `terraform apply` in `infra/envs/shared`. It issues the new certificate, then **fails** to delete
+   the old one (`ResourceInUseException`). That's expected.
+2. Check `terraform output certificate_arn` in `infra/envs/shared` shows the **new** ARN.
+3. `terraform apply` in `infra/envs/staging` (and production), so CloudFront moves to the new certificate.
+4. `terraform apply` in `infra/envs/shared` again. It now deletes the old certificate.
+
 ## Step 7: finish email authentication
 
 1. **SES:** in the AWS console → SES (London) → **Identities → rajdurbar.co.uk**, check that DKIM
@@ -196,6 +205,22 @@ records aren't needed. Remove them from `infra/modules/dns/main.tf` once email i
 
 ## Rollback (DNS move)
 
-At any point: GoDaddy → Nameservers → **Change** → enter `ns14.wixdns.net` and `ns15.wixdns.net`.
-The Wix zone is untouched by all of this, so everything returns to how it was. You can delete the
-Route 53 zone afterwards with `terraform destroy` in `infra/envs/shared`.
+GoDaddy → Nameservers → **Change** → enter `ns14.wixdns.net` and `ns15.wixdns.net`. The Wix zone
+is untouched by steps 1–5, so **up to step 5** everything returns to how it was.
+
+**After step 6** this is no longer a clean undo. The Wix zone has none of the new records, so:
+
+- ACM can't see its validation records and stops renewing the certificate staging uses.
+- SES loses its DKIM and MAIL FROM records, and the domain identity stops verifying.
+- The DMARC record disappears.
+
+Fix the problem in Route 53 instead where possible. If you really must go back, first add those
+records to the Wix zone by hand (copy them from the Route 53 console).
+
+**After step 10** (domain at Route 53 Domains), change the nameservers in Route 53 → Registered
+domains, not GoDaddy.
+
+The Route 53 zone is protected from deletion (`prevent_destroy`), so `terraform destroy` in
+`infra/envs/shared` refuses to run. To really remove it, delete the `lifecycle` block on
+`aws_route53_zone.this` in `infra/modules/dns/main.tf` first, and only once the nameservers no
+longer point at it.

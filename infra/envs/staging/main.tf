@@ -42,22 +42,28 @@ locals {
   use_custom_domain = false
 }
 
-provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
-}
+data "aws_caller_identity" "current" {}
 
-data "aws_route53_zone" "main" {
-  count = local.use_custom_domain ? 1 : 0
-  name  = local.domain
-}
+# The zone and certificate come from envs/shared's state, so staging always
+# uses exactly the certificate shared issued. (A lookup by domain name could
+# pick any newer certificate for rajdurbar.co.uk, even one without staging.)
+# Bucket name follows the bootstrap's "<project>-tfstate-<account id>".
+data "terraform_remote_state" "shared" {
+  count   = local.use_custom_domain ? 1 : 0
+  backend = "s3"
 
-data "aws_acm_certificate" "site" {
-  count       = local.use_custom_domain ? 1 : 0
-  provider    = aws.us_east_1
-  domain      = local.domain
-  statuses    = ["ISSUED"]
-  most_recent = true
+  config = {
+    bucket = "rajdurbar-tfstate-${data.aws_caller_identity.current.account_id}"
+    key    = "envs/shared/terraform.tfstate"
+    region = local.region
+  }
+
+  lifecycle {
+    postcondition {
+      condition     = try(self.outputs.certificate_arn, null) != null
+      error_message = "envs/shared has no issued certificate yet. Set issue_certificate = true there and apply it first (runbook step 6)."
+    }
+  }
 }
 
 module "network" {
@@ -87,13 +93,13 @@ module "web" {
   # (ECS Express Mode) is added alongside the backend code.
 
   aliases             = local.use_custom_domain ? [local.hostname] : []
-  acm_certificate_arn = local.use_custom_domain ? data.aws_acm_certificate.site[0].arn : ""
+  acm_certificate_arn = local.use_custom_domain ? data.terraform_remote_state.shared[0].outputs.certificate_arn : ""
 }
 
 resource "aws_route53_record" "staging" {
   for_each = local.use_custom_domain ? toset(["A", "AAAA"]) : toset([])
 
-  zone_id = data.aws_route53_zone.main[0].zone_id
+  zone_id = data.terraform_remote_state.shared[0].outputs.zone_id
   name    = local.hostname
   type    = each.value
 

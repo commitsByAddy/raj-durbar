@@ -45,7 +45,7 @@ Runbook steps 1–5. Allow about 1 hour, then up to 48 hours for the change to s
 **Create the zone** (`infra/envs/shared`)
 - [ ] `backend.hcl` created from the example with the state bucket name
 - [ ] `terraform init -backend-config=backend.hcl`
-- [ ] `terraform plan -out shared.tfplan` **only creates**, destroys nothing (about 25 resources)
+- [ ] `terraform plan -out shared.tfplan` **only creates**, destroys nothing (about 20 resources)
 - [ ] `terraform apply shared.tfplan`
 - [ ] Four Route 53 nameservers copied from `terraform output name_servers`:
       `_____________` `_____________` `_____________` `_____________`

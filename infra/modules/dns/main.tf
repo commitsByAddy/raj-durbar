@@ -11,9 +11,16 @@
 
 data "aws_region" "current" {}
 
+# A new zone gets four NEW nameservers, while GoDaddy keeps pointing at the
+# old ones, so destroying or replacing this zone takes the domain (email and
+# website) offline. Terraform refuses any plan that would do that.
 resource "aws_route53_zone" "this" {
   name    = var.domain
   comment = "Managed by Terraform (infra/envs/shared)"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # --- 1. Microsoft 365 (copied as-is) ----------------------------------------
@@ -28,7 +35,18 @@ resource "aws_route53_record" "mx" {
 
 # Apex TXT holds several values in ONE record set (Route 53 requirement):
 #   - SPF: the old zone had TWO SPF records, which is invalid (SPF "permerror")
-#     and hurts delivery. Merged into one, keeping both senders.
+#     and hurts delivery. Merged into one, keeping both senders:
+#       "v=spf1 include:secureserver.net -all"
+#       "v=spf1 include:spf.protection.outlook.com -all"
+#     Both ended in -all, but two SPF records make SPF return permerror, which
+#     many receivers treat as "no SPF". So any other service that sends as
+#     @rajdurbar.co.uk (Wix forms, a booking or newsletter tool, a scanner)
+#     may be delivered today and FAIL SPF after the move. The DMARC reports
+#     (p=none) list every sender: check them before tightening DMARC, and add
+#     an include here for any legitimate one.
+#     DNS lookups (limit 10, checked 17 Nov 2026): 4. spf.protection.outlook.com
+#     (IPs only), secureserver.net -> spf-0.secureserver.net -> outlook again.
+#     Recheck the count if you add another include.
 #   - Microsoft 365 domain verification value.
 # SES does not need to be in the apex SPF: it uses the MAIL FROM subdomain.
 resource "aws_route53_record" "apex_txt" {
