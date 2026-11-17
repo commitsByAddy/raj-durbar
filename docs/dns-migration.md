@@ -26,7 +26,7 @@ Terraform: [`infra/modules/dns`](../infra/modules/dns), applied from
 | `lyncdiscover`, `sip` CNAME; `_sip._tls`, `_sipfederationtls._tcp` SRV | Skype/Teams | unchanged |
 | `@` A | `185.230.63.107 / .171 / .186` | Wix website, unchanged until cutover. TTL lowered to 300s (was 3600) so the cutover is quick |
 | `www` CNAME | `cdn3.wixdns.net` | Wix website, unchanged until cutover. TTL 300s, as above |
-| `_dmarc` TXT | `v=DMARC1; p=none; rua=mailto:info@rajdurbar.co.uk` | **New:** monitor-only |
+| `_dmarc` TXT | `v=DMARC1; p=none; rua=mailto:info@rajdurbar.co.uk; adkim=r; aspf=r` | **New:** monitor-only |
 | `xxxx._domainkey` CNAME ×3 | `…dkim.amazonses.com` | **New:** SES DKIM |
 | `mail` MX + TXT | `feedback-smtp.eu-west-2.amazonses.com`, `v=spf1 include:amazonses.com -all` | **New:** SES MAIL FROM |
 | `_xxxx` CNAME ×3 | ACM validation | **New:** HTTPS certificate for apex, `www`, `staging`. Added in step 6, not step 2 |
