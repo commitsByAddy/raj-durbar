@@ -9,6 +9,17 @@ variable "ttl" {
   default     = 3600
 }
 
+variable "website_ttl" {
+  description = <<-EOT
+    TTL (seconds) for the Wix apex A and www CNAME. Shorter than the old
+    3600 so the cutover to CloudFront reaches every visitor within minutes,
+    not an hour. CloudFront alias records have no TTL of their own (they use
+    CloudFront's 60s), so rolling back is already quick.
+  EOT
+  type        = number
+  default     = 300
+}
+
 variable "website" {
   description = <<-EOT
     Where rajdurbar.co.uk and www point.

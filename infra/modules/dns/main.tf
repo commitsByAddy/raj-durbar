@@ -112,7 +112,7 @@ resource "aws_route53_record" "apex_a" {
   zone_id = aws_route53_zone.this.zone_id
   name    = var.domain
   type    = "A"
-  ttl     = local.use_cloudfront ? null : var.ttl
+  ttl     = local.use_cloudfront ? null : var.website_ttl
   records = local.use_cloudfront ? null : var.wix_apex_ips
 
   dynamic "alias" {
@@ -129,7 +129,7 @@ resource "aws_route53_record" "www" {
   zone_id = aws_route53_zone.this.zone_id
   name    = "www.${var.domain}"
   type    = local.use_cloudfront ? "A" : "CNAME"
-  ttl     = local.use_cloudfront ? null : var.ttl
+  ttl     = local.use_cloudfront ? null : var.website_ttl
   records = local.use_cloudfront ? null : [var.wix_www_target]
 
   dynamic "alias" {
