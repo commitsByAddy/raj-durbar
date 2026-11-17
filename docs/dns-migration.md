@@ -29,7 +29,7 @@ Terraform: [`infra/modules/dns`](../infra/modules/dns), applied from
 | `_dmarc` TXT | `v=DMARC1; p=none; rua=mailto:info@rajdurbar.co.uk` | **New:** monitor-only |
 | `xxxx._domainkey` CNAME ×3 | `…dkim.amazonses.com` | **New:** SES DKIM |
 | `mail` MX + TXT | `feedback-smtp.eu-west-2.amazonses.com`, `v=spf1 include:amazonses.com -all` | **New:** SES MAIL FROM |
-| `_xxxx` CNAME ×3 | ACM validation | **New:** HTTPS certificate for apex, `www`, `staging` |
+| `_xxxx` CNAME ×3 | ACM validation | **New:** HTTPS certificate for apex, `www`, `staging`. Added in step 6, not step 2 |
 
 ## Step 1: check Wix for records a lookup can't see
 
@@ -50,8 +50,9 @@ terraform init -backend-config=backend.hcl
 terraform plan -out shared.tfplan
 ```
 
-The plan should **only create** resources (about 25): the zone, the records above, an ACM
-certificate and the SES identity. If it looks right:
+The plan should **only create** resources (about 20): the zone, the records above and the SES
+identity. The HTTPS certificate is not requested yet. ACM gives up on validation after 72 hours,
+so it waits until the nameservers point at Route 53 (step 6). If it looks right:
 
 ```powershell
 terraform apply shared.tfplan
@@ -100,14 +101,17 @@ nslookup -type=NS rajdurbar.co.uk 1.1.1.1     # should list awsdns servers
 
 ## Step 6: issue the certificate
 
-Once the NS lookup shows awsdns:
+Once the NS lookup shows awsdns, change `issue_certificate = false` to `true` in
+`infra/envs/shared/main.tf` and apply:
 
 ```powershell
-terraform apply -var wait_for_certificate=true
+terraform plan -out shared.tfplan    # should only create the certificate, its records and the validation wait
+terraform apply shared.tfplan
 ```
 
-This waits until ACM marks the certificate **ISSUED**, usually 5–30 minutes. ACM renews it
-automatically after that.
+This requests the certificate and waits until ACM marks it **ISSUED**, usually 5–30 minutes. ACM
+renews it automatically after that. Commit the change so the setting stays in the file and later
+applies keep the certificate.
 
 ## Step 7: finish email authentication
 
@@ -126,14 +130,20 @@ automatically after that.
 
 ## Step 8: staging address
 
-When staging is built, run `terraform apply -var use_custom_domain=true` in `infra/envs/staging`.
-That serves staging at `https://staging.rajdurbar.co.uk`.
+When staging is built and the certificate is ISSUED, change `use_custom_domain = false` to `true`
+in the `locals` block of `infra/envs/staging/main.tf`, commit it, and run `terraform apply` in
+`infra/envs/staging`. That serves staging at `https://staging.rajdurbar.co.uk`.
 
 ## Step 9: later, the website cutover from Wix
 
 When production is live and tested, change `website` in `infra/envs/shared/main.tf` to
 `{ mode = "cloudfront", cloudfront_domain_name = "<prod>.cloudfront.net" }` and apply. Only the
-website records change; email is untouched. To roll back the website, set `mode` back to `"wix"`.
+website records change; email is untouched. The plan should show the apex `A` and `www` records
+**updated in place** (not destroyed and recreated) and two `AAAA` records created.
+
+To roll back the website, set `mode` back to `"wix"`, plan, and check that the plan **destroys
+the two `AAAA` records** and updates apex `A` and `www` in place. If the apply stops partway with
+a Route 53 "conflicting RRSet" error, run `terraform apply` again: the second run finishes the job.
 Keep Wix about 2 weeks, then cancel it and add a CAA record (noted in the module).
 
 ## Step 10: transfer the domain registration from GoDaddy to Route 53

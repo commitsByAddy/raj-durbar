@@ -79,7 +79,7 @@ Runbook steps 1–5. Allow about 1 hour, then up to 48 hours for the change to s
 
 Runbook steps 6–7.
 
-- [ ] `terraform apply -var wait_for_certificate=true` in `infra/envs/shared` finishes
+- [ ] `issue_certificate = true` in `infra/envs/shared/main.tf`, committed, and `terraform apply` finishes
 - [ ] ACM (us-east-1) shows the certificate **Issued** for apex, `www`, `staging`
 - [ ] SES (London) → Identities → `rajdurbar.co.uk`: DKIM **Successful**
 - [ ] SES custom MAIL FROM (`mail.rajdurbar.co.uk`) **Success**
@@ -171,7 +171,7 @@ Order follows [HLD §7](hld.md#7-build-order). One PR per item.
 ## Phase 7: Staging
 
 - [ ] `infra/envs/staging` applied (the database starts costing from here)
-- [ ] `terraform apply -var use_custom_domain=true`, and `https://staging.rajdurbar.co.uk` loads
+- [ ] `use_custom_domain = true` in `infra/envs/staging/main.tf`, committed and applied, and `https://staging.rajdurbar.co.uk` loads
 - [ ] End-to-end test: book a table → "received" email → staff confirm → "confirmed" email
 - [ ] Decline, edit and cancel flows tested
 - [ ] Booking rules tested: under 1 hour refused, outside hours refused, 9+ guests refused

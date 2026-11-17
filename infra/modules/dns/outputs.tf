@@ -8,8 +8,8 @@ output "name_servers" {
 }
 
 output "certificate_arn" {
-  description = "ACM certificate (us-east-1) for CloudFront. Usable once its status is ISSUED."
-  value       = aws_acm_certificate.site.arn
+  description = "ISSUED ACM certificate (us-east-1) for CloudFront; null until issue_certificate is true."
+  value       = try(aws_acm_certificate_validation.site[0].certificate_arn, null)
 }
 
 output "ses_identity_arn" {

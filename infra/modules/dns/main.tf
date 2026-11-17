@@ -92,48 +92,70 @@ resource "aws_route53_record" "m365_dkim" {
 
 # --- 2. Website --------------------------------------------------------------
 
-resource "aws_route53_record" "apex_wix" {
-  count = var.website.mode == "wix" ? 1 : 0
-
-  zone_id = aws_route53_zone.this.zone_id
-  name    = var.domain
-  type    = "A"
-  ttl     = var.ttl
-  records = var.wix_apex_ips
-}
-
-resource "aws_route53_record" "www_wix" {
-  count = var.website.mode == "wix" ? 1 : 0
-
-  zone_id = aws_route53_zone.this.zone_id
-  name    = "www.${var.domain}"
-  type    = "CNAME"
-  ttl     = var.ttl
-  records = [var.wix_www_target]
-}
+# Switching mode must not delete and create records as separate steps:
+# Route 53 rejects an A record at www while the CNAME is still there, and a
+# second A record set at the apex. So the apex A and the www record are each
+# ONE resource whose contents change with the mode. Terraform updates them in
+# place, and the provider sends the old-out/new-in swap as a single atomic
+# Route 53 change batch.
+#
+# The two AAAA records only exist in cloudfront mode. They depend on the www
+# record, so Terraform creates them after www has become an A record (cutover)
+# and deletes them before www goes back to a CNAME (rollback).
 
 locals {
   cloudfront_zone_id = "Z2FDTNDATAQYW2" # fixed hosted zone ID for all CloudFront distributions
-  cloudfront_records = var.website.mode == "cloudfront" ? {
-    "apex-a"    = { name = var.domain, type = "A" }
-    "apex-aaaa" = { name = var.domain, type = "AAAA" }
-    "www-a"     = { name = "www.${var.domain}", type = "A" }
-    "www-aaaa"  = { name = "www.${var.domain}", type = "AAAA" }
-  } : {}
+  use_cloudfront     = var.website.mode == "cloudfront"
 }
 
-resource "aws_route53_record" "website_cloudfront" {
-  for_each = local.cloudfront_records
+resource "aws_route53_record" "apex_a" {
+  zone_id = aws_route53_zone.this.zone_id
+  name    = var.domain
+  type    = "A"
+  ttl     = local.use_cloudfront ? null : var.ttl
+  records = local.use_cloudfront ? null : var.wix_apex_ips
+
+  dynamic "alias" {
+    for_each = local.use_cloudfront ? [1] : []
+    content {
+      name                   = var.website.cloudfront_domain_name
+      zone_id                = local.cloudfront_zone_id
+      evaluate_target_health = false
+    }
+  }
+}
+
+resource "aws_route53_record" "www" {
+  zone_id = aws_route53_zone.this.zone_id
+  name    = "www.${var.domain}"
+  type    = local.use_cloudfront ? "A" : "CNAME"
+  ttl     = local.use_cloudfront ? null : var.ttl
+  records = local.use_cloudfront ? null : [var.wix_www_target]
+
+  dynamic "alias" {
+    for_each = local.use_cloudfront ? [1] : []
+    content {
+      name                   = var.website.cloudfront_domain_name
+      zone_id                = local.cloudfront_zone_id
+      evaluate_target_health = false
+    }
+  }
+}
+
+resource "aws_route53_record" "website_aaaa" {
+  for_each = local.use_cloudfront ? toset([var.domain, "www.${var.domain}"]) : toset([])
 
   zone_id = aws_route53_zone.this.zone_id
-  name    = each.value.name
-  type    = each.value.type
+  name    = each.value
+  type    = "AAAA"
 
   alias {
     name                   = var.website.cloudfront_domain_name
     zone_id                = local.cloudfront_zone_id
     evaluate_target_health = false
   }
+
+  depends_on = [aws_route53_record.www]
 }
 
 # --- 3. DMARC ----------------------------------------------------------------
@@ -151,7 +173,15 @@ resource "aws_route53_record" "dmarc" {
 
 # --- 4. ACM certificate for CloudFront (us-east-1) ---------------------------
 
+# The certificate is only requested once issue_certificate is true, i.e. after
+# the GoDaddy nameservers point here. ACM gives up on DNS validation after 72
+# hours, so requesting it earlier (before an unpredictable nameserver switch)
+# can leave a FAILED certificate that has to be recreated.
+#
+# Never set issue_certificate back to false once CloudFront uses the
+# certificate: that deletes it and the sites lose HTTPS.
 resource "aws_acm_certificate" "site" {
+  count    = var.issue_certificate ? 1 : 0
   provider = aws.us_east_1
 
   domain_name               = var.domain
@@ -165,7 +195,7 @@ resource "aws_acm_certificate" "site" {
 
 resource "aws_route53_record" "cert_validation" {
   for_each = {
-    for o in aws_acm_certificate.site.domain_validation_options : o.domain_name => {
+    for o in try(aws_acm_certificate.site[0].domain_validation_options, []) : o.domain_name => {
       name   = o.resource_record_name
       type   = o.resource_record_type
       record = o.resource_record_value
@@ -181,10 +211,10 @@ resource "aws_route53_record" "cert_validation" {
 }
 
 resource "aws_acm_certificate_validation" "site" {
-  count    = var.wait_for_certificate ? 1 : 0
+  count    = var.issue_certificate ? 1 : 0
   provider = aws.us_east_1
 
-  certificate_arn         = aws_acm_certificate.site.arn
+  certificate_arn         = aws_acm_certificate.site[0].arn
   validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
 }
 

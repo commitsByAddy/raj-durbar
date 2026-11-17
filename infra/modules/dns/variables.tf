@@ -86,10 +86,11 @@ variable "ses_mail_from_subdomain" {
   default     = "mail"
 }
 
-variable "wait_for_certificate" {
+variable "issue_certificate" {
   description = <<-EOT
-    Wait for ACM to issue the certificate. Only works once the GoDaddy
-    nameservers point at this zone; keep false for the first apply.
+    Request the ACM certificate and wait until it is ISSUED. Set true only
+    once the GoDaddy nameservers point at this zone: ACM stops trying to
+    validate after 72 hours, so requesting it before delegation can fail.
   EOT
   type        = bool
   default     = false

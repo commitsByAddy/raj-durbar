@@ -34,15 +34,12 @@ locals {
   name     = "rajdurbar-staging"
   domain   = "rajdurbar.co.uk"
   hostname = "staging.${local.domain}"
-}
 
-variable "use_custom_domain" {
-  description = <<-EOT
-    Serve staging at staging.rajdurbar.co.uk. Needs envs/shared applied, the
-    GoDaddy nameservers moved to Route 53, and the certificate ISSUED.
-  EOT
-  type        = bool
-  default     = false
+  # Serve staging at staging.rajdurbar.co.uk. Needs envs/shared applied, the
+  # GoDaddy nameservers moved to Route 53, and the certificate ISSUED
+  # (runbook step 8). Kept in the file, not passed with -var, so later applies
+  # don't undo it.
+  use_custom_domain = false
 }
 
 provider "aws" {
@@ -51,12 +48,12 @@ provider "aws" {
 }
 
 data "aws_route53_zone" "main" {
-  count = var.use_custom_domain ? 1 : 0
+  count = local.use_custom_domain ? 1 : 0
   name  = local.domain
 }
 
 data "aws_acm_certificate" "site" {
-  count       = var.use_custom_domain ? 1 : 0
+  count       = local.use_custom_domain ? 1 : 0
   provider    = aws.us_east_1
   domain      = local.domain
   statuses    = ["ISSUED"]
@@ -89,12 +86,12 @@ module "web" {
   # api_origin_domain and origin_verify_secret are wired in once the API module
   # (ECS Express Mode) is added alongside the backend code.
 
-  aliases             = var.use_custom_domain ? [local.hostname] : []
-  acm_certificate_arn = var.use_custom_domain ? data.aws_acm_certificate.site[0].arn : ""
+  aliases             = local.use_custom_domain ? [local.hostname] : []
+  acm_certificate_arn = local.use_custom_domain ? data.aws_acm_certificate.site[0].arn : ""
 }
 
 resource "aws_route53_record" "staging" {
-  for_each = var.use_custom_domain ? toset(["A", "AAAA"]) : toset([])
+  for_each = local.use_custom_domain ? toset(["A", "AAAA"]) : toset([])
 
   zone_id = data.aws_route53_zone.main[0].zone_id
   name    = local.hostname

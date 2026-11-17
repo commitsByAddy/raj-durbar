@@ -42,12 +42,6 @@ provider "aws" {
   default_tags { tags = local.tags }
 }
 
-variable "wait_for_certificate" {
-  description = "Set true after the GoDaddy nameservers point at Route 53 (runbook step 4)."
-  type        = bool
-  default     = false
-}
-
 module "dns" {
   source = "../../modules/dns"
   providers = {
@@ -62,10 +56,14 @@ module "dns" {
   # { mode = "cloudfront", cloudfront_domain_name = "<prod distribution>.cloudfront.net" }.
   website = { mode = "wix" }
 
-  # Fill in from the Microsoft Defender portal to turn on M365 DKIM (runbook step 6).
+  # Fill in from the Microsoft Defender portal to turn on M365 DKIM (runbook step 7.3).
   m365_dkim_cnames = null
 
-  wait_for_certificate = var.wait_for_certificate
+  # Change to true once `nslookup -type=NS rajdurbar.co.uk 1.1.1.1` lists awsdns
+  # servers (runbook step 6), then apply. Kept in the file, not passed with -var,
+  # so later applies don't undo it. Never set it back to false once CloudFront
+  # uses the certificate: that deletes it.
+  issue_certificate = false
 }
 
 output "name_servers" {
