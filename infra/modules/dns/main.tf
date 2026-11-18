@@ -198,12 +198,22 @@ resource "aws_route53_record" "dmarc" {
 #
 # Never set issue_certificate back to false once CloudFront uses the
 # certificate: that deletes it and the sites lose HTTPS.
+locals {
+  certificate_sans = [for s in var.certificate_subdomains : "${s}.${var.domain}"]
+
+  # ACM's validation records, by name. Only known once the certificate exists,
+  # so they're used for record values, never for the for_each keys below.
+  certificate_validation = {
+    for o in try(aws_acm_certificate.site[0].domain_validation_options, []) : o.domain_name => o
+  }
+}
+
 resource "aws_acm_certificate" "site" {
   count    = var.issue_certificate ? 1 : 0
   provider = aws.us_east_1
 
   domain_name               = var.domain
-  subject_alternative_names = [for s in var.certificate_subdomains : "${s}.${var.domain}"]
+  subject_alternative_names = local.certificate_sans
   validation_method         = "DNS"
 
   lifecycle {
@@ -211,20 +221,17 @@ resource "aws_acm_certificate" "site" {
   }
 }
 
+# Keyed on the certificate's names, which come from config and are known at
+# plan time. (Keying on domain_validation_options fails the plan: its keys
+# aren't known until the certificate has been requested.)
 resource "aws_route53_record" "cert_validation" {
-  for_each = {
-    for o in try(aws_acm_certificate.site[0].domain_validation_options, []) : o.domain_name => {
-      name   = o.resource_record_name
-      type   = o.resource_record_type
-      record = o.resource_record_value
-    }
-  }
+  for_each = var.issue_certificate ? toset(concat([var.domain], local.certificate_sans)) : toset([])
 
   zone_id         = aws_route53_zone.this.zone_id
-  name            = each.value.name
-  type            = each.value.type
+  name            = local.certificate_validation[each.key].resource_record_name
+  type            = local.certificate_validation[each.key].resource_record_type
   ttl             = 300
-  records         = [each.value.record]
+  records         = [local.certificate_validation[each.key].resource_record_value]
   allow_overwrite = true
 }
 

@@ -63,7 +63,7 @@ module "dns" {
   # servers (runbook step 6), then apply. Kept in the file, not passed with -var,
   # so later applies don't undo it. Never set it back to false once CloudFront
   # uses the certificate: that deletes it.
-  issue_certificate = false
+  issue_certificate = true
 }
 
 output "name_servers" {
