@@ -38,40 +38,40 @@ Mostly done earlier. Confirm each item still holds.
 Runbook steps 1–5. Allow about 1 hour, then up to 48 hours for the change to spread.
 
 **Prepare**
-- [ ] Wix → Domains → Manage DNS Records: every row compared with the [record table](dns-migration.md#whats-in-the-zone)
-- [ ] Any extra records added to `infra/modules/dns/main.tf` (or none found)
-- [ ] Old nameservers written down for rollback: `ns14.wixdns.net`, `ns15.wixdns.net`
+- [x] Wix → Domains → Manage DNS Records: every row compared with the [record table](dns-migration.md#whats-in-the-zone)
+- [x] Any extra records added to `infra/modules/dns/main.tf` (or none found): none found, 17 Nov 2026
+- [x] Old nameservers written down for rollback: `ns14.wixdns.net`, `ns15.wixdns.net`
 
 **Create the zone** (`infra/envs/shared`)
-- [ ] `backend.hcl` created from the example with the state bucket name
-- [ ] `terraform init -backend-config=backend.hcl`
-- [ ] `terraform plan -out shared.tfplan` **only creates**, destroys nothing (about 20 resources)
-- [ ] `terraform apply shared.tfplan`
-- [ ] Four Route 53 nameservers copied from `terraform output name_servers`:
-      `_____________` `_____________` `_____________` `_____________`
+- [x] `backend.hcl` created from the example with the state bucket name
+- [x] `terraform init -backend-config=backend.hcl`
+- [x] `terraform plan -out shared.tfplan` **only creates**, destroys nothing (about 20 resources)
+- [x] `terraform apply shared.tfplan` (20 added, 17 Nov 2026)
+- [x] Four Route 53 nameservers copied from `terraform output name_servers`:
+      `ns-1416.awsdns-49.org` `ns-1870.awsdns-41.co.uk` `ns-267.awsdns-33.com` `ns-740.awsdns-28.net`
 
 **Check before switching** (`nslookup … <route53-ns>`)
-- [ ] MX → `rajdurbar-co-uk.mail.protection.outlook.com`
-- [ ] TXT → one SPF record + the `NETORGFT…` record
-- [ ] A → the three Wix IPs
-- [ ] `www` CNAME → `cdn3.wixdns.net`
-- [ ] `autodiscover` CNAME → `autodiscover.outlook.com`
+- [x] MX → `rajdurbar-co-uk.mail.protection.outlook.com`
+- [x] TXT → one SPF record + the `NETORGFT…` record
+- [x] A → the three Wix IPs
+- [x] `www` CNAME → `cdn3.wixdns.net`
+- [x] `autodiscover` CNAME → `autodiscover.outlook.com`
 
 ⏸ (nothing has changed for anyone yet)
 
 **Switch** (quiet time)
-- [ ] GoDaddy → Nameservers → *I'll use my own* → four Route 53 nameservers saved. Date/time: ________
+- [x] GoDaddy → Nameservers → *I'll use my own* → four Route 53 nameservers saved. Date/time: 17 Nov 2026 23:14
 
 **Verify same day**
-- [ ] `nslookup -type=NS rajdurbar.co.uk 1.1.1.1` lists `awsdns` servers
-- [ ] `https://rajdurbar.co.uk` and `https://www.rajdurbar.co.uk` show the Wix site, with a padlock
-- [ ] Email **to** `info@` from Gmail arrives
-- [ ] Email **from** `info@` to Gmail arrives; *Show original* shows **SPF: PASS**
-- [ ] Outlook on phone and desktop still syncs
-- [ ] Wix dashboard still shows the site connected (if not, follow Wix's *connect via pointing* prompts)
+- [x] `nslookup -type=NS rajdurbar.co.uk 1.1.1.1` lists `awsdns` servers
+- [x] `https://rajdurbar.co.uk` and `https://www.rajdurbar.co.uk` show the Wix site, with a padlock
+- [x] Email **to** `info@` from Gmail arrives
+- [x] Email **from** `info@` to Gmail arrives; *Show original* shows **SPF: PASS** (DMARC pass; DKIM none until step 7.3)
+- [x] Outlook on phone and desktop still syncs (both OK 18 Nov)
+- [x] Wix dashboard still shows the site connected (if not, follow Wix's *connect via pointing* prompts)
 
 **Verify next day**
-- [ ] All of the above still OK
+- [x] All of the above still OK (18 Nov 2026)
 
 ⏸
 
@@ -79,10 +79,10 @@ Runbook steps 1–5. Allow about 1 hour, then up to 48 hours for the change to s
 
 Runbook steps 6–7.
 
-- [ ] `issue_certificate = true` in `infra/envs/shared/main.tf`, committed, and `terraform apply` finishes
-- [ ] ACM (us-east-1) shows the certificate **Issued** for apex, `www`, `staging`
-- [ ] SES (London) → Identities → `rajdurbar.co.uk`: DKIM **Successful**
-- [ ] SES custom MAIL FROM (`mail.rajdurbar.co.uk`) **Success**
+- [x] `issue_certificate = true` in `infra/envs/shared/main.tf`, committed, and `terraform apply` finishes
+- [x] ACM (us-east-1) shows the certificate **Issued** for apex, `www`, `staging` (18 Nov 2026)
+- [x] SES (London) → Identities → `rajdurbar.co.uk`: DKIM **Successful**
+- [x] SES custom MAIL FROM (`mail.rajdurbar.co.uk`) **Success**
 - [ ] SES production access requested. Date: ________
 - [ ] SES production access **approved**. Date: ________
 - [ ] Microsoft Defender → DKIM: the two CNAME values copied into `m365_dkim_cnames`, then applied
@@ -224,4 +224,6 @@ One line per session: date, what got done, anything to pick up next time.
 | Date | Done | Next / blockers |
 |---|---|---|
 | 14 Nov 2026 | Requirements, HLD, DNS Terraform, runbook, checklist | Review PR #3, then Phase 1 checks and Phase 2 |
+| 17 Nov 2026 | Three code reviews, fixes merged (PR #3). Phase 2 steps 1–4: Wix records checked, Route 53 zone created, GoDaddy nameservers switched at 23:14 | Step 5 checks |
+| 18 Nov 2026 | Step 5 checks all pass (DNS, HTTPS, email SPF/DMARC pass, Outlook phone + desktop, Wix connected). Phase 2 done. Step 6: certificate ISSUED; SES DKIM and MAIL FROM verified | Step 7: SES production access request, M365 DKIM |
 | | | |
